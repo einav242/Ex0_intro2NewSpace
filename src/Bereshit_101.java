@@ -30,8 +30,6 @@ public class Bereshit_101 {
 	}
 	// 14095, 955.5, 24.8, 2.0
 	public static void main(String[] args) {
-		Moon m = new Moon();
-		System.out.println(m.getAcc(0.3));
 		System.out.println("Simulating Bereshit's Landing:");
 		// starting point:
 		double vs = 24.8;
