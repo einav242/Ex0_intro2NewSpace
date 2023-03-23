@@ -78,7 +78,7 @@ public class Bereshit_101 {
                     this.engines.balance();
                 } // rotate to vertical position.
                 else {this.ang =0;}
-                NN=0.3; // brake slowly, a proper PID controller here is needed!
+                NN=0.5; // brake slowly, a proper PID controller here is needed!
                 if(hs<2) {hs=0;}
                 if(alt>1000 && alt<1500){
                     NN = 0.4;
@@ -92,7 +92,7 @@ public class Bereshit_101 {
                     NN = 0.55;
                 }
                 else if (alt > 125){
-                    NN = 0.65;
+                    NN = 0.6;
                 }
                 if(alt<125) { // very close to the ground!
                     NN=1; // maximum braking!
