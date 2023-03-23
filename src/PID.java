@@ -9,17 +9,23 @@ public class PID {
         this.I = 0;
         this.first_run = true;
     }
-    public double update(double error, double dt, double vs){
+    public double update(double error, double dt){
         if (first_run){
             last_error = error;
             first_run = false;
         }
-        this.P = error;
-        this.D = (error - this.last_error)/dt;
-        this.I+=error;
-        this.last_error = error;
-        double ans = this.P*this.p0 - this.I*this.i0 - this.D*this.d0;
-        return ans*0.001;
+        double ans;
+        if(error>2000){
+            ans = 0.003;
+        }
+        else{
+            this.P = error;
+            this.D = (error - this.last_error)/dt;
+            this.I+=error;
+            this.last_error = error;
+            ans = this.P*this.p0 - this.I*this.i0 - this.D*this.d0;
+        }
+        return ans;
     }
 
 public static void main(String[] args) {
