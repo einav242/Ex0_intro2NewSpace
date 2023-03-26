@@ -5,7 +5,7 @@ public class PID {
     private boolean first_run;
 
 
-    public PID(double p, double i, double d, int max, int min) {
+    public PID(double p, double i, double d, double max, int min) {
         this.P = p;
         this.I = i;
         this.D = d;

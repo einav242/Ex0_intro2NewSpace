@@ -19,44 +19,23 @@ public class Bereshit_101 {
     public static final double MAIN_BURN = 0.15; //liter per sec, 12 liter per m'
     public static final double SECOND_BURN = 0.009; //liter per sec 0.6 liter per m'
     public static final double ALL_BURN = MAIN_BURN + 8*SECOND_BURN;
-    double vs;
-    double hs;
-    double dist;
-    double ang; // zero is vertical (as in landing)
-    double alt; // 2:25:40 (as in the simulation) // https://www.youtube.com/watch?v=JJ0VfRL9AMs
-    double time;
-    double dt; // sec
-    double acc; // Acceleration rate (m/s^2)
-    double fuel; //
-    double weight;
-    double NN; // rate[0,1]
-    boolean start_landing;
-    boolean landed;
-    PID pid;
-    Engines engines;
-
-    public Bereshit_101(){
-        vs = 24.8;
-        hs = 932;
-        dist = 181*1000;
-        ang = 58.3; // zero is vertical (as in landing)
-        alt = 13748; // 2:25:40 (as in the simulation) // https://www.youtube.com/watch?v=JJ0VfRL9AMs
-        time = 0;
-        dt = 1; // sec
-        acc=0; // Acceleration rate (m/s^2)
-        fuel = 121; //
-        weight = WEIGHT_EMP + fuel;
-        NN = 0.7; // rate[0,1]
-        start_landing = false;
-        landed = false;
-        pid = new PID(0.7,1,0.01,1,0);
-        engines = new Engines(this);
-    }
-
+    double vs = 24.8;
+    double hs = 932;
+    double dist = 181*1000;
+    double ang = 58.3; // zero is vertical (as in landing)
+    double alt = 13748; // 2:25:40 (as in the simulation) // https://www.youtube.com/watch?v=JJ0VfRL9AMs
+    double time = 0;
+    double dt = 1; // sec
+    double acc=0; // Acceleration rate (m/s^2)
+    double fuel = 121; //
+    double weight = WEIGHT_EMP + fuel;
+    double NN = 0.7; // rate[0,1]
+    boolean start_landing = false;
+    boolean landed = false;
+    PID pid = null;
     public static double accMax(double weight) {
         return acc(weight, true,8);
     }
-
     public static double acc(double weight, boolean main, int seconds) {
         double t = 0;
         if(main) {t += MAIN_ENG_F;}
@@ -64,135 +43,124 @@ public class Bereshit_101 {
         double ans = t/weight;
         return ans;
     }
+    // 14095, 955.5, 24.8, 2.0
 
-
-    public void start() {
-        if(this.alt < 2000) {
+    public void start(){
+        this.pid = new PID(0.04,0.003,0.2,1,0);
+        if(this.alt<2000){
             this.start_landing = true;
         }
-        if(!this.landed) {
-            this.engines.balance();
-            this.NNController();
-            double ang_rad = Math.toRadians(ang);
-            double h_acc = Math.sin(ang_rad) * acc;
-            double v_acc = Math.cos(ang_rad) * acc;
-            double vacc = Moon.getAcc(hs);
-            time += dt;
-            this.AngSpeed();
-            this.updateFuel();
-            this.update_speed(h_acc, v_acc, vacc);
-            this.Data();
+        if(!this.landed){
+            this.simulation();
+            this.computations();
+            this.printData();
         }
     }
 
-    public double constrain(double nn){
-        if (nn > 1){
-            return 1;
+    private double get_dvs(){
+        if(this.alt> 2000){
+            return 30;
         }
-        else if(nn < 0){
-            return 0;
+        else if(alt > 1000){
+            return 24;
         }
-        else return nn;
+        else if(alt > 500){
+            return 12;
+        }
+        else if (alt > 250){
+            return 6;
+        }
+        else if(alt > 125){
+            return 2;
+        }
+        else return 1;
     }
 
-    private void updateAng(){
-        if(alt<2000 && this.ang>3) {
-            this.engines.balance();
-        } // rotate to vertical position.
-        else {this.ang =0;}
-    }
-
-    private void NNController(){
+    private void simulation(){
         if(alt>=1){
-            if(alt>2000) {	// maintain a vertical speed of [20-25] m/s
-                if(vs >25) {NN= constrain(NN + 0.003*dt);} // more power for braking
-                if(vs <20) {NN= constrain(NN - 0.003*dt);} // less power for braking
+            if(!start_landing) {	// maintain a vertical speed of [20-25] m/s
+                if(vs >25) {NN+=0.003*dt;} // more power for braking
+                if(vs <20) {NN-=0.003*dt;} // less power for braking
+                if(alt > 3500 && alt < 6000){
+                    ang = 57.0;
+                }
+                else if (alt<3500){
+                    ang = 54.0;
+                }
             }
             // lower than 2 km - horizontal speed should be close to zero
             else {
-                double update = this.pid.update(0.5-NN,this.dt);
-                NN = constrain(update);
-                this.updateAng();
+                if(this.ang>3) {this.ang-=3.5;} // rotate to vertical position.
+                else {this.ang = 0;}
+                NN=getNN(); // brake slowly, a proper PID controller here is needed!
+                if(hs<2) {hs=0.0;}
                 if(alt<125) { // very close to the ground!
                     NN=1; // maximum braking!
-                    if(vs<5) {NN=0.7;} // if it is slow enough - go easy on the brakes
+                    if(vs<5) {NN=0.0;} // if it is slow enough - go easy on the brakes
+                }
+                if(alt<5) { // no need to stop
+                    NN=0.3;
                 }
             }
-            if(alt<5) { // no need to stop
-                NN=0.38;
-            }
+
         }
         else {
             this.landed = true;
         }
+
     }
 
-    private void update_speed(double h_acc, double v_acc, double vacc){
-        if(hs > 0){
-            if (hs - h_acc * dt<0){
-                hs = 0.1;
-            }
-            else {
-                hs = hs - h_acc * dt;
-            }
-        }
+    private double getNN() {
+        double update = this.pid.update(this.vs - this.get_dvs(),this.dt);
+        double ans = Math.max(Math.min(update+NN,1),0);
+        return ans;
+    }
 
-        if(hs<2 && alt<= 2000){
-            hs = 0;
+    private void computations(){
+        double ang_rad = Math.toRadians(ang);
+        double h_acc = Math.sin(ang_rad)*acc;
+        double v_acc = Math.cos(ang_rad)*acc;
+        double vacc = Moon.getAcc(hs);
+        time+=dt;
+        double dw = dt*ALL_BURN*NN;
+        if(fuel>0) {
+            fuel -= dw;
+            weight = WEIGHT_EMP + fuel;
+            acc = NN* accMax(weight);
+        }
+        else { // ran out of fuel
+            acc=0;
         }
 
         v_acc -= vacc;
-        if(vs - v_acc * dt < 2){
-            vs = 0.3;
-        }
-        else {
-            vs = vs - v_acc * dt;
-        }
-        dist -= hs * dt;
-        if (vs < 1) {
+        if(hs>0) {hs -= h_acc*dt;}
+        dist -= hs*dt;
+        vs -= v_acc*dt;
+        if(vs<0){
             vs = 0;
         }
-        alt -= dt * vs;
+        alt -= dt*vs;
     }
 
-    private void updateFuel(){
-        double dw = dt * ALL_BURN * NN;
-        if (fuel > 0) {
-            fuel -= dw;
-            weight = WEIGHT_EMP + fuel;
-            acc = NN * accMax(weight);
-        } else { // ran out of fuel
-            acc = 0;
-        }
-    }
-
-    private void AngSpeed(){
-        double AngularSpeed = (hs / dist) / Math.toRadians(Math.PI * 2);
-        this.ang += AngularSpeed;
-        if (ang < 3) {
-            ang = 0;
-        }
-    }
-
-
-    private void Data() {
+    private void printData() {
         DecimalFormat form = new DecimalFormat("###.###");
-        if(alt<0){
+        if(alt<1){
             alt = 0;
         }
         if(!landed && (time % 10 == 0 || alt<100) )
             System.out.println("Time: "+form.format(time)+"  Height: "+form.format(alt)+" Verticalspeed: "
                     +form.format(vs)+" HorizontalSpeed: "+form.format(hs)+ "  fuel:"+form.format(fuel)+"  Weight: "
                     +form.format(weight) +"  Acceleration: " +form.format(acc) +"  Rotation: "
-                    +form.format(ang));
+                    +form.format(ang)+ " NN: "+NN);
         if(landed)
             System.out.println("Landed successfully");
     }
 
     public static void main(String[] args) {
-        Bereshit_101 Bereshit_a= new Bereshit_101();
-        while(!Bereshit_a.landed) {
-            Bereshit_a.start();
+        System.out.println("Simulating Bereshit's Landing:");
+        Bereshit_101 bereshit = new Bereshit_101();
+        while (!bereshit.landed){
+            bereshit.start();
         }
     }
 }
