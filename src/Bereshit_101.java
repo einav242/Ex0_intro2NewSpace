@@ -89,7 +89,7 @@ public class Bereshit_101 {
                 } // less power for braking
 
                 if(alt > 3500 && alt < 6000){
-                    ang = 57.0;
+                    ang = 60.0;
                 }
                 else if (alt<3500){
                     ang = 54.0;
