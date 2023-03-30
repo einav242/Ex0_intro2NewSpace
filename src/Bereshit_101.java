@@ -79,8 +79,14 @@ public class Bereshit_101 {
     private void simulation(){
         if(alt>=1){
             if(!start_landing) {	// maintain a vertical speed of [20-25] m/s
-                if(vs >25) {NN+=0.003*dt;} // more power for braking
-                if(vs <20) {NN-=0.003*dt;} // less power for braking
+                if(vs >25) {
+//                    NN+=0.003*dt;
+                    NN = getNN();
+                } // more power for braking
+                if(vs <20) {
+//                    NN-=0.003*dt;
+                    NN = getNN();
+                } // less power for braking
 
                 if(alt > 3500 && alt < 6000){
                     ang = 57.0;
@@ -142,16 +148,18 @@ public class Bereshit_101 {
             alt = 0;
         }
         if(!landed && (time % 10 == 0 || alt<100) )
-            System.out.println("Time: "+form.format(time)+"  Height: "+form.format(alt)+" Verticalspeed: "
-                    +form.format(vs)+" HorizontalSpeed: "+form.format(hs)+ "  fuel:"+form.format(fuel)+"  Weight: "
-                    +form.format(weight) +"  Acceleration: " +form.format(acc) +"  Rotation: "
-                    +form.format(ang)+ " NN: "+NN);
+//            System.out.println("Time: "+form.format(time)+"  Height: "+form.format(alt)+" Verticalspeed: "
+//                    +form.format(vs)+" HorizontalSpeed: "+form.format(hs)+ "  fuel:"+form.format(fuel)+"  Weight: "
+//                    +form.format(weight) +"  Acceleration: " +form.format(acc) +"  Rotation: "
+//                    +form.format(ang)+ " NN: "+NN);
+            System.out.println(time+"\t"+vs+"\t"+hs+"\t"+dist+"\t"+alt+"\t"+ang+"\t"+fuel+"\t"+acc+"\t"+get_dvs());
         if(landed)
             System.out.println("Landed successfully");
     }
 
     public static void main(String[] args) {
-        System.out.println("Simulating Bereshit's Landing:");
+//        System.out.println("Simulating Bereshit's Landing:");
+        System.out.println("time\t vs\t hs\t dist\t alt\t ang\t fuel\t acc\t dvs");
         Bereshit_101 bereshit = new Bereshit_101();
         while (!bereshit.landed){
             bereshit.start();
