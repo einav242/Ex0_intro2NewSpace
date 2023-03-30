@@ -3,6 +3,7 @@
 
 
 import java.text.DecimalFormat;
+import java.util.Random;
 
 /**
  * This class represents the basic flight controller of the Bereshit space craft.
@@ -19,20 +20,41 @@ public class Bereshit_101 {
     public static final double MAIN_BURN = 0.15; //liter per sec, 12 liter per m'
     public static final double SECOND_BURN = 0.009; //liter per sec 0.6 liter per m'
     public static final double ALL_BURN = MAIN_BURN + 8*SECOND_BURN;
-    double vs = 24.8;
-    double hs = 932;
-    double dist = 181*1000;
-    double ang = 58.3; // zero is vertical (as in landing)
-    double alt = 13748; // 2:25:40 (as in the simulation) // https://www.youtube.com/watch?v=JJ0VfRL9AMs
-    double time = 0;
-    double dt = 1; // sec
-    double acc=0; // Acceleration rate (m/s^2)
-    double fuel = 121; //
-    double weight = WEIGHT_EMP + fuel;
-    double NN = 0.7; // rate[0,1]
-    boolean start_landing = false;
-    boolean landed = false;
-    PID pid= new PID(0.04,0.003,0.2,1,0);;
+    double vs;
+    double hs;
+    double dist;
+    double ang; // zero is vertical (as in landing)
+    double alt; // 2:25:40 (as in the simulation) // https://www.youtube.com/watch?v=JJ0VfRL9AMs
+    double time;
+    double dt; // sec
+    double acc; // Acceleration rate (m/s^2)
+    double fuel;
+    double weight;
+    double NN;
+    boolean start_landing;
+    boolean landed;
+    PID pid;
+    double update;
+
+    public Bereshit_101(){
+        Random rand = new Random();
+        double randomNumber = rand.nextDouble();
+        this.vs = 20 + (randomNumber * 10) ;
+        this.hs = 932;
+        this.dist = 181*1000;
+        this.ang = 58.3; // zero is vertical (as in landing)
+        this.alt = 13748; // 2:25:40 (as in the simulation) // https://www.youtube.com/watch?v=JJ0VfRL9AMs
+        this.time = 0;
+        this.dt = 1; // sec
+        this.acc=0; // Acceleration rate (m/s^2)
+        this.fuel = 121; //
+        this.weight = WEIGHT_EMP + fuel;
+        this.NN = 0.7; // rate[0,1]
+        this.start_landing = false;
+        this.landed = false;
+        this.pid= new PID(0.04,0.003,0.2,1,0);
+    }
+
     public static double accMax(double weight) {
         return acc(weight, true,8);
     }
@@ -52,7 +74,7 @@ public class Bereshit_101 {
         }
         if(!this.landed){
             this.simulation();
-            this.computations();
+            this.updateSpeed();
             this.printData();
         }
     }
@@ -78,16 +100,10 @@ public class Bereshit_101 {
 
     private void simulation(){
         if(alt>=1){
-            if(!start_landing) {	// maintain a vertical speed of [20-25] m/s
-                if(vs >25) {
-//                    NN+=0.003*dt;
+            if(!start_landing) {
+                if(vs >25 || vs <20) {
                     NN = getNN();
-                } // more power for braking
-                if(vs <20) {
-//                    NN-=0.003*dt;
-                    NN = getNN();
-                } // less power for braking
-
+                }
                 if(alt > 3500 && alt < 6000){
                     ang = 60.0;
                 }
@@ -107,16 +123,15 @@ public class Bereshit_101 {
         else {
             this.landed = true;
         }
-
     }
 
     private double getNN() {
-        double update = this.pid.update(this.vs - this.get_dvs(),this.dt);
+        this.update = this.pid.update(this.vs - this.get_dvs(),this.dt);
         double ans = Math.max(Math.min(update+NN,1),0);
         return ans;
     }
 
-    private void computations(){
+    private void updateSpeed(){
         double ang_rad = Math.toRadians(ang);
         double h_acc = Math.sin(ang_rad)*acc;
         double v_acc = Math.cos(ang_rad)*acc;
@@ -143,23 +158,19 @@ public class Bereshit_101 {
     }
 
     private void printData() {
-        DecimalFormat form = new DecimalFormat("###.###");
         if(alt<1){
             alt = 0;
         }
         if(!landed && (time % 10 == 0 || alt<100) )
-//            System.out.println("Time: "+form.format(time)+"  Height: "+form.format(alt)+" Verticalspeed: "
-//                    +form.format(vs)+" HorizontalSpeed: "+form.format(hs)+ "  fuel:"+form.format(fuel)+"  Weight: "
-//                    +form.format(weight) +"  Acceleration: " +form.format(acc) +"  Rotation: "
-//                    +form.format(ang)+ " NN: "+NN);
-            System.out.println(time+"\t"+vs+"\t"+hs+"\t"+dist+"\t"+alt+"\t"+ang+"\t"+fuel+"\t"+acc+"\t"+get_dvs());
+            System.out.println(time+"\t"+vs+"\t"+hs+"\t"+dist+"\t"+alt+"\t"+ang+"\t"+fuel+"\t"+acc+"\t"+get_dvs()
+            +"\t"+this.update);
         if(landed)
             System.out.println("Landed successfully");
     }
 
     public static void main(String[] args) {
-//        System.out.println("Simulating Bereshit's Landing:");
-        System.out.println("time\t vs\t hs\t dist\t alt\t ang\t fuel\t acc\t dvs");
+        System.out.println("Simulating Bereshit's Landing:");
+        System.out.println("time\tvs\ths\tdist\talt\tang\tfuel\tacc\tdvs\tpid");
         Bereshit_101 bereshit = new Bereshit_101();
         while (!bereshit.landed){
             bereshit.start();
