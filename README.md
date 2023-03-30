@@ -15,4 +15,11 @@ Open the project in your preferred Java IDE.<br />
 run Bereshit_101.java.<br />
 The simulation will print at each stage the data on the spacecraft, such as vertical speed, horizontal speed, angle, fuel, acceleration, and more.
 
+## Additional files:
+1. Excel file containing landing results with corresponding graphs. <br /> 
+2. PDF file with the first part of the task  - the reasons of the crash.<br />
+
 ### By: Einav Benito -207051707, Shani ichai 318994183
+
+
+
