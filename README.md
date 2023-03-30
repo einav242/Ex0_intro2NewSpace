@@ -10,9 +10,9 @@ We will then develop a control system that will use this mathematical model to d
 required for the engines to land the spacecraft safely
 
 #### Steps to Run the Simulation:
-Clone this repository to your local machine.
-Open the project in your preferred Java IDE.
-run Bereshit_101.java
+Clone this repository to your local machine.<br />
+Open the project in your preferred Java IDE.<br />
+run Bereshit_101.java.<br />
 The simulation will print at each stage the data on the spacecraft, such as vertical speed, horizontal speed, angle, fuel, acceleration, and more.
 
 ### By: Einav Benito -207051707, Shani ichai 318994183
