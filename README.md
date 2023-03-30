@@ -17,7 +17,7 @@ The simulation will print at each stage the data on the spacecraft, such as vert
 
 ## Additional files:
 1. Excel file containing landing results with corresponding graphs. <br /> 
-2. PDF file with the first part of the task  - the reasons of the crash.<br />
+2. PDF file with the first part of the task  - the reasons for the crash.<br />
 
 ### By: Einav Benito -207051707, Shani ichai 318994183
 
