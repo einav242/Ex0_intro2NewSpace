@@ -32,10 +32,11 @@ public class Bereshit_101 {
     double NN = 0.7; // rate[0,1]
     boolean start_landing = false;
     boolean landed = false;
-    PID pid = null;
+    PID pid= new PID(0.04,0.003,0.2,1,0);;
     public static double accMax(double weight) {
         return acc(weight, true,8);
     }
+
     public static double acc(double weight, boolean main, int seconds) {
         double t = 0;
         if(main) {t += MAIN_ENG_F;}
@@ -46,7 +47,6 @@ public class Bereshit_101 {
     // 14095, 955.5, 24.8, 2.0
 
     public void start(){
-        this.pid = new PID(0.04,0.003,0.2,1,0);
         if(this.alt<2000){
             this.start_landing = true;
         }
@@ -59,18 +59,18 @@ public class Bereshit_101 {
 
     private double get_dvs(){
         if(this.alt> 2000){
-            return 30;
-        }
-        else if(alt > 1000){
-            return 24;
+            return 23;
         }
         else if(alt > 500){
+            return 24;
+        }
+        else if(alt > 200){
             return 12;
         }
-        else if (alt > 250){
+        else if (alt > 50){
             return 6;
         }
-        else if(alt > 125){
+        else if(alt > 20){
             return 2;
         }
         else return 1;
@@ -81,6 +81,7 @@ public class Bereshit_101 {
             if(!start_landing) {	// maintain a vertical speed of [20-25] m/s
                 if(vs >25) {NN+=0.003*dt;} // more power for braking
                 if(vs <20) {NN-=0.003*dt;} // less power for braking
+
                 if(alt > 3500 && alt < 6000){
                     ang = 57.0;
                 }
@@ -94,13 +95,6 @@ public class Bereshit_101 {
                 else {this.ang = 0;}
                 NN=getNN(); // brake slowly, a proper PID controller here is needed!
                 if(hs<2) {hs=0.0;}
-                if(alt<125) { // very close to the ground!
-                    NN=1; // maximum braking!
-                    if(vs<5) {NN=0.0;} // if it is slow enough - go easy on the brakes
-                }
-                if(alt<5) { // no need to stop
-                    NN=0.3;
-                }
             }
 
         }
