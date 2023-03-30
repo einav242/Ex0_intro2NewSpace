@@ -39,7 +39,7 @@ public class Bereshit_101 {
     public Bereshit_101(){
         Random rand = new Random();
         double randomNumber = rand.nextDouble();
-        this.vs = 20 + (randomNumber * 10) ;
+        this.vs = 20 + (randomNumber * 10);// set the vertical speed to a random number between 20 and 30
         this.hs = 932;
         this.dist = 181*1000;
         this.ang = 58.3; // zero is vertical (as in landing)
@@ -50,8 +50,8 @@ public class Bereshit_101 {
         this.fuel = 121; //
         this.weight = WEIGHT_EMP + fuel;
         this.NN = 0.7; // rate[0,1]
-        this.start_landing = false;
-        this.landed = false;
+        this.start_landing = false; //The spacecraft starts landing from a speed of 2000
+        this.landed = false; //PID control
         this.pid= new PID(0.04,0.003,0.2,1,0);
     }
 
@@ -66,7 +66,6 @@ public class Bereshit_101 {
         double ans = t/weight;
         return ans;
     }
-    // 14095, 955.5, 24.8, 2.0
 
     public void start(){
         if(this.alt<2000){
@@ -79,6 +78,7 @@ public class Bereshit_101 {
         }
     }
 
+    // This function returns the desired vertical speed of the spacecraft at each stage of the landing
     private double get_dvs(){
         if(this.alt> 2000){
             return 23;
@@ -98,6 +98,7 @@ public class Bereshit_101 {
         else return 1;
     }
 
+    // This function sets the angle and necessary power according to the vs and altitude of the spacecraft
     private void simulation(){
         if(alt>=1){
             if(!start_landing) {
@@ -125,12 +126,14 @@ public class Bereshit_101 {
         }
     }
 
+    // Using PID control, this function returns the necessary force to stop the spacecraft
     private double getNN() {
         this.update = this.pid.update(this.vs - this.get_dvs(),this.dt);
         double ans = Math.max(Math.min(update+NN,1),0);
         return ans;
     }
 
+    // This function updates the vs of the spacecraft and the remaining fuel using acceleration
     private void updateSpeed(){
         double ang_rad = Math.toRadians(ang);
         double h_acc = Math.sin(ang_rad)*acc;
